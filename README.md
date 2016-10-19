@@ -20,7 +20,10 @@ Show types on hover
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+* Have a `.flowconfig` file in project root
+* Make sure you gave NodeJS in path
+* Make sure you have Flow installed globally or locally. We recommnend
+using `flow-bin` NPM package.
 
 ## Extension Settings
 This extension contributes the following settings:
@@ -43,11 +46,4 @@ to autocomple.
 Initial release of VSCode flow-ide
 
 ### Thanks
-Inspired by [Flow for VSCode](https://github.com/flowtype/flow-for-vscode) and [Atom Flow-ide]( https://github.com/steelbrain/flow-ide )
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on OSX or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on OSX or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (OSX) to see a list of Markdown snippets
+Inspired by [Flow for VSCode](https://github.com/flowtype/flow-for-vscode) and [Atom Flow-ide]( https://github.com/steelbrain/flow-ide ) .
