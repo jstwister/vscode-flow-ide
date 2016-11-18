@@ -26,22 +26,29 @@ export function activate(context: vscode.ExtensionContext) {
     }
     console.log('Flow enabled!');
     // The registration needs to happen after a timeout because of 
-    setTimeout(() => {
-        context.subscriptions.push(
-            vscode.languages.registerSignatureHelpProvider('javascriptreact', new SignatureProvider(), '(', '.')
-        );
-        context.subscriptions.push(
-            vscode.languages.registerSignatureHelpProvider('javascript', new SignatureProvider(), '(', '.')
-        );
-    }, 1000);
-    supportedLanguages.forEach((lang) => {
-        context.subscriptions.push(
-            vscode.languages.registerHoverProvider(lang, 
+    context.subscriptions.push(
+        vscode.languages.registerSignatureHelpProvider(
+            [
+                { language: 'javascript', scheme: 'file', pattern: '**/*js*' },
+                { language: 'javascriptreact', scheme: 'file', pattern: '**/*js*' }
+            ], 
+            new SignatureProvider(), '(', '.')
+    );
+
+   context.subscriptions.push(
+            vscode.languages.registerHoverProvider([
+                { language: 'javascript', scheme: 'file', pattern: '**/*js*' },
+                { language: 'javascriptreact', scheme: 'file', pattern: '**/*js*' }
+            ], 
             new HoverProvider()));
-        context.subscriptions.push(
-            vscode.languages.registerCompletionItemProvider(lang, 
-            new AutocompleteProvider(), '.'));
-   });
+   
+   context.subscriptions.push(
+        vscode.languages.registerCompletionItemProvider([
+            { language: 'javascript', scheme: 'file', pattern: '**/*js*' },
+            { language: 'javascriptreact', scheme: 'file', pattern: '**/*js*' }
+        ], 
+        new AutocompleteProvider(), '.'));
+   
    const coverage = new CoverageProvider(context.subscriptions);
    vscode.commands.registerCommand('flow.coverage', () => {
         coverage.toggleDecorations();

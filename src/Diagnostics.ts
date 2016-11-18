@@ -64,17 +64,20 @@ const updateDiagnostics = (document: vscode.TextDocument) => {
         return;
     }
     const filename = document.uri.fsPath;
+    const base = Path.basename(filename);
     if (
-        filename.indexOf('.js') === -1 && 
-        filename.indexOf('.jsx') === -1 &&
-        filename.indexOf('.es6') === -1) {
+        !/\.js$/.test(base) && 
+        !/\.jsx$/.test(base) &&
+        !/\.es6$/.test(base)) {
             return false;
     }
     diagnostics.clear();   
     fetchFlowDiagnostic(document.getText(), filename).then((flowDiag) => {
-        const vscodeDiagByFile = mapFlowDiagToVSCode(flowDiag.errors);
-        Object.keys(vscodeDiagByFile).forEach((file) => {
-            diagnostics.set( vscode.Uri.file(file), vscodeDiagByFile[file]);
-        })
+        if (flowDiag && flowDiag.errors) {
+            const vscodeDiagByFile = mapFlowDiagToVSCode(flowDiag.errors);
+            Object.keys(vscodeDiagByFile).forEach((file) => {
+                diagnostics.set( vscode.Uri.file(file), vscodeDiagByFile[file]);
+            });
+        }
     });
 }

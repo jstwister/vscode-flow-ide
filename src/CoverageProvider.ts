@@ -21,7 +21,9 @@ export default class CoverageDecorations {
     refreshCoverage() {
         vscode.window.visibleTextEditors.forEach((editor) => {
             this.getCoverage(editor).then((coverageResp) => {
-                this.coverageUpdated(coverageResp, editor);
+                if (coverageResp) {
+                    this.coverageUpdated(coverageResp, editor);
+                }
             });
         });
     }
@@ -55,8 +57,14 @@ export default class CoverageDecorations {
     }
     getCoverage(editor): any {
         const filename = editor.document.uri.fsPath;
-        return FlowLib.getCoverage(editor.document.getText(), filename).then((coverage) => {
-            return coverage.expressions; 
+        const text = editor.document.getText();
+        if(!text) {
+            return new Promise((resolve, reject) => resolve());
+        }
+        return FlowLib.getCoverage(text, filename).then((coverage) => {
+            if(coverage) {
+                return coverage.expressions;
+            } 
         });
     }
     _updateEditor(editor, filename) {

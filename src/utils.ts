@@ -16,7 +16,7 @@ export function getPathToFlowFromConfig(): string {
 
 export function determineFlowPath() {
     let pathToFlow = '';
-    const localInstall = getPathToFlowFromConfig() || `${workspace.rootPath}/.node_modules/bin/flow`;
+    const localInstall = getPathToFlowFromConfig() || `${workspace.rootPath}/node_modules/.bin/flow`;
        if( fs.existsSync(localInstall) ) {
            pathToFlow = localInstall;
        } else {

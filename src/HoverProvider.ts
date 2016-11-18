@@ -13,7 +13,7 @@ export default class HoverProvider {
                     // console.log('Response got back:'+JSON.stringify(typeAtPos));
                     return new vscode.Hover([
                         'Flow-IDE',
-                        `${word}: ${typeAtPos.type}`
+                        { language: 'javascript', value: `${word}: ${typeAtPos.type}` }
                     ]);
             }).catch((e) => {
                 

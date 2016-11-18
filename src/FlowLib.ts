@@ -3,6 +3,7 @@ import { spawn } from 'cross-spawn';
 import * as vscode from 'vscode';
 import { determineFlowPath, checkFlow, checkNode } from './utils';
 import * as path from 'path';
+import * as fs from  'fs';
 
 let pathToFlow = '';
 
@@ -19,7 +20,9 @@ const getPathToFlow = () => {
 export default class FlowLib {
     static execFlow(fileContents, filename, args) {
         return new Promise((resolve, reject) => {
-            // console.log('Fetching data for %s, %s, %s', fileName, pos.line, pos.character);
+            if (!fs.existsSync(filename)) {
+                resolve(undefined);
+            }
             const cwd = path.dirname(filename);
             let flowOutput = "";
 			let flowOutputError = "";
