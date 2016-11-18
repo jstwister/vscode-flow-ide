@@ -2,7 +2,7 @@
   "name": "vscode-flow-ide",
   "displayName": "vscode-flow-ide",
   "description": "Visual studio code Flowtype support",
-  "version": "0.0.1",
+  "version": "1.1.0",
   "publisher": "gcazaciuc",
   "engines": {
     "vscode": "^1.5.0"

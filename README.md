@@ -41,6 +41,12 @@ to autocomple.
 
 ## Release Notes
 
+### 1.1.0
+
+Fix incorrectly detecting local Flow installs
+Format properly the hover text
+Guard against various crashes due to running flow on files it shouldn't run against
+
 ### 1.0.0
 
 Initial release of VSCode flow-ide
