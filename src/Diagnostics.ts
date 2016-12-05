@@ -81,7 +81,6 @@ const handleError = (err, groupedDiagnosis) => {
 const mapFlowDiagToVSCode = (errors) => {
     const groupedDiagnosis = {};
     errors.forEach((err) => {
-//"Property not found in"
         if(err.operation && err.operation.type === "Blame") {
             handleOperationError(err, groupedDiagnosis);
         } else {
