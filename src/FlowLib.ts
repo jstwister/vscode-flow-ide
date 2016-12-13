@@ -44,24 +44,37 @@ export default class FlowLib {
             flowProc.stdin.end();
         });
     }
-    static getTypeAtPos(fileContents, fileName, pos: vscode.Position) {
+
+    static getTypeAtPos(fileContents: string, fileName, pos: vscode.Position) {
         return FlowLib.execFlow(
                     fileContents,
                     fileName,  
                     ['type-at-pos', '--json', '--pretty', '--path', fileName, pos.line + 1, pos.character + 1]);
     }
+
     static getDiagnostics(fileContents: string, fileName: string): any {
         return FlowLib.execFlow(
                     fileContents,
                     fileName,  
                     ['status', '--json']);
     }
+
     static getAutocomplete(fileContents: string, fileName: string, pos: vscode.Position): any {
         return FlowLib.execFlow(
                     fileContents,
                     fileName,  
                     ['autocomplete', '--json', fileName, pos.line + 1, pos.character + 1]);
     }
+
+    static getDefinition(fileContents: string, fileName: string, pos: vscode.Position): any {
+        return FlowLib.execFlow(
+                    fileContents,
+                    fileName,  
+                    ['get-def', '--json', fileName, pos.line + 1, pos.character + 1]);
+
+                    
+    }
+    
      static getCoverage(fileContents: string, fileName: string): any {
         return FlowLib.execFlow(
                     fileContents,

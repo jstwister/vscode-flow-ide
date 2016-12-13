@@ -41,10 +41,29 @@ const buildDiagnosticMessage = (err) => {
     }).join(' ');
 };
 
-const mapFlowDiagToVSCode = (errors) => {
-    const groupedDiagnosis = {};
-    errors.forEach((err) => {
-        const firstBlame = err.message.find((m) => m.type === 'Blame');
+const buildOperationDiagnosticMessage = (err) => {
+    let m = err.operation;
+    return m.type === 'Blame' ? `${m.descr} (${Path.basename(m.path)}:${m.line}:${m.start})` : m.descr;
+};
+
+const handleOperationError = (err, groupedDiagnosis) => {
+     const firstBlame = err.operation;
+        groupedDiagnosis[firstBlame.path] = groupedDiagnosis[firstBlame.path] || []; 
+        const message = buildOperationDiagnosticMessage(err) + ' error: ' + buildDiagnosticMessage(err);
+        const diag = new vscode.Diagnostic(
+            new vscode.Range(
+                new vscode.Position(firstBlame.line - 1, firstBlame.start - 1),
+                new vscode.Position(firstBlame.endLine - 1, firstBlame.end)
+            ),
+            message,
+            mapFlowDiagLevelToVSCode(err.level)
+        );
+        diag.source = 'flow'
+        groupedDiagnosis[firstBlame.path].push(diag);
+}
+
+const handleError = (err, groupedDiagnosis) => {
+    const firstBlame = err.message.find ((m) => m.type === 'Blame');
         groupedDiagnosis[firstBlame.path] = groupedDiagnosis[firstBlame.path] || []; 
         const diag = new vscode.Diagnostic(
             new vscode.Range(
@@ -56,6 +75,18 @@ const mapFlowDiagToVSCode = (errors) => {
         );
         diag.source = 'flow'
         groupedDiagnosis[firstBlame.path].push(diag);
+}
+
+
+const mapFlowDiagToVSCode = (errors) => {
+    const groupedDiagnosis = {};
+    errors.forEach((err) => {
+        if(err.operation && err.operation.type === "Blame") {
+            handleOperationError(err, groupedDiagnosis);
+        } else {
+            handleError(err, groupedDiagnosis);
+        }
+        
     });
     return groupedDiagnosis;
 }
