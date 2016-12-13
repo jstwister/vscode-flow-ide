@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import FlowLib from './FlowLib';
+const beautify = require('js-beautify').js_beautify;
+
 export default class HoverProvider {
     provideHover(
         document: vscode.TextDocument, 
@@ -10,10 +12,10 @@ export default class HoverProvider {
 		    const word = document.getText(wordPosition);
             return FlowLib.getTypeAtPos(
                 document.getText(), document.uri.fsPath, position).then((typeAtPos:any) => {
-                    // console.log('Response got back:'+JSON.stringify(typeAtPos));
+                    const beautifiedData = beautify(typeAtPos.type, { indent_size: 4 });
                     return new vscode.Hover([
                         'Flow-IDE',
-                        { language: 'javascript', value: `${word}: ${typeAtPos.type}` }
+                        { language: 'javascriptreact', value: `${word}: ${beautifiedData}` }
                     ]);
             }).catch((e) => {
                 

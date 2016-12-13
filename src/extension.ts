@@ -59,10 +59,11 @@ export function activate(context: vscode.ExtensionContext) {
        );
    
    const coverage = new CoverageProvider(context.subscriptions);
-   vscode.commands.registerCommand('flow.coverage', () => {
+   const refreshCoverage = () => {
         coverage.toggleDecorations();
         coverage.refreshCoverage();
-   });
+   };
+   vscode.commands.registerCommand('flow.coverage', refreshCoverage);
    setupDiagnostics(context.subscriptions);
 }
 

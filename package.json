@@ -3,7 +3,7 @@
   "displayName": "vscode-flow-ide",
   "description": "Visual studio code Flowtype support",
   "version": "1.1.2",
-  "publisher": "SaboteurSpk",
+  "publisher": "gcazaciuc",
   "engines": {
     "vscode": "^1.6.0"
   },
@@ -23,27 +23,27 @@
         "title": "Flow-IDE: Toggle Flowtype coverage"
       }
     ],
-     "configuration": {
-            "type": "object",
-            "title": "Flow-IDE Configurations",
-            "properties": {
-                "flowide.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Is flow enabled"
-                },
-                "flowide.useCodeSnippetsOnFunctionSuggest": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Whether should autocomplete params name"
-                },
-                "flowide.pathToFlow": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Path to flow binary"
-                }
-            }
+    "configuration": {
+      "type": "object",
+      "title": "Flow-IDE Configurations",
+      "properties": {
+        "flowide.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Is flow enabled"
+        },
+        "flowide.useCodeSnippetsOnFunctionSuggest": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether should autocomplete params name"
+        },
+        "flowide.pathToFlow": {
+          "type": "string",
+          "default": "",
+          "description": "Path to flow binary"
         }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
@@ -58,14 +58,15 @@
     "@types/mocha": "^2.2.32"
   },
   "dependencies": {
-    "cross-spawn": "^4.0.2"
+    "cross-spawn": "^4.0.2",
+    "js-beautify": "^1.6.4"
   },
   "icon": "flow-logo.png",
   "repository": {
-      "type": "git",
-      "url": "https://github.com/SaboteurSpk/vscode-flow-ide"
+    "type": "git",
+    "url": "https://github.com/SaboteurSpk/vscode-flow-ide"
   },
   "bugs": {
-      "url": "https://github.com/SaboteurSpk/vscode-flow-ide/issues"
+    "url": "https://github.com/SaboteurSpk/vscode-flow-ide/issues"
   }
 }

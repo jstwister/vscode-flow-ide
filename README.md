@@ -16,6 +16,8 @@ Show types on hover
 ![Param hints](img/param-hints.gif)
 
 4. Inline flow type coverage
+    Open command pallete(CTRL+SHIFT+P) -> Toggle flow coverage: you will see an inline display of the code
+    covered by Flow.
 
 
 ## Requirements

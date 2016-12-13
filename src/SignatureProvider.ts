@@ -31,10 +31,10 @@ export default class SignatureProvider implements vscode.SignatureHelpProvider {
                 const signatureHelp = new vscode.SignatureHelp();
                 const sig = new vscode.SignatureInformation(callerName + item.type, '');
                 sig.parameters = item.func_details.params.map((detail) => {
-                    return new vscode.ParameterInformation(`${detail.name}:${detail.type}`, '');
+                    return new vscode.ParameterInformation(`${detail.name}:${detail.type}`);
                 });
                 signatureHelp.signatures = [sig];
-                signatureHelp.activeParameter = Math.min(theCall.commas.length, item.func_details.params.length - 1);
+                signatureHelp.activeParameter = Math.min(theCall.commas.length-1, item.func_details.params.length - 1);
                 signatureHelp.activeSignature = 0;
                 return signatureHelp;
             });

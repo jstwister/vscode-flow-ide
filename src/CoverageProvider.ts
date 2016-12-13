@@ -17,6 +17,9 @@ export default class CoverageDecorations {
         disposables.push(
             vscode.window.onDidChangeActiveTextEditor(() => this.refreshCoverage())
         );
+        disposables.push(
+             vscode.workspace.onDidSaveTextDocument(() => this.refreshCoverage())
+        );
     }
     refreshCoverage() {
         vscode.window.visibleTextEditors.forEach((editor) => {
