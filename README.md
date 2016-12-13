@@ -43,6 +43,13 @@ to autocomple.
 
 ## Release Notes
 
+### 1.1.2
+
+Made the formatting of hover provider nicer.
+Fixed a bug that caused caching of coverage results. Now it displays coverage as you save the files.
+Add go to definition capabilities( thanks @SaboteurSpk)
+Fix misplaced error for missing JSX props( thanks @SaboteurSpk)
+
 ### 1.1.0
 
 Fix incorrectly detecting local Flow installs

@@ -64,9 +64,9 @@
   "icon": "flow-logo.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SaboteurSpk/vscode-flow-ide"
+    "url": "https://github.com/gcazaciuc/vscode-flow-ide"
   },
   "bugs": {
-    "url": "https://github.com/SaboteurSpk/vscode-flow-ide/issues"
+    "url": "https://github.com/gcazaciuc/vscode-flow-ide/issues"
   }
 }
