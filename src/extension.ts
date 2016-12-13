@@ -2,6 +2,7 @@ import HoverProvider from './HoverProvider';
 import AutocompleteProvider from './AutocompleteProvider';
 import CoverageProvider from './CoverageProvider';
 import SignatureProvider from './SignatureProvider';
+import DefinitionProvider from './DefinitionProvider';
 import { setupDiagnostics } from './Diagnostics';
 import { isFlowEnabled } from './utils';
 'use strict';
@@ -48,6 +49,14 @@ export function activate(context: vscode.ExtensionContext) {
             { language: 'javascriptreact', scheme: 'file', pattern: '**/*js*' }
         ], 
         new AutocompleteProvider(), '.'));
+
+   context.subscriptions.push(
+       vscode.languages.registerDefinitionProvider([
+            { language: 'javascript', scheme: 'file', pattern: '**/*js*' },
+            { language: 'javascriptreact', scheme: 'file', pattern: '**/*js*' }
+        ], 
+         new DefinitionProvider())
+       );
    
    const coverage = new CoverageProvider(context.subscriptions);
    vscode.commands.registerCommand('flow.coverage', () => {
