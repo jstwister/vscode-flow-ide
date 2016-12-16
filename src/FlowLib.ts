@@ -37,7 +37,11 @@ export default class FlowLib {
                 if (flowOutputError) {
                     reject(flowOutputError);
                 } else {
-                    resolve(JSON.parse(flowOutput));
+                    let result = flowOutput;
+                    if(flowOutput && flowOutput.length) {
+                        result = JSON.parse(flowOutput);
+                    }
+                    resolve(result);
                 }
             });
             flowProc.stdin.write(fileContents);

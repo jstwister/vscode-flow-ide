@@ -53,7 +53,7 @@ const handleOperationError = (err, groupedDiagnosis) => {
         const diag = new vscode.Diagnostic(
             new vscode.Range(
                 new vscode.Position(firstBlame.line - 1, firstBlame.start - 1),
-                new vscode.Position(firstBlame.endLine - 1, firstBlame.end)
+                new vscode.Position(firstBlame.endline - 1, firstBlame.end)
             ),
             message,
             mapFlowDiagLevelToVSCode(err.level)
@@ -65,10 +65,11 @@ const handleOperationError = (err, groupedDiagnosis) => {
 const handleError = (err, groupedDiagnosis) => {
     const firstBlame = err.message.find ((m) => m.type === 'Blame');
         groupedDiagnosis[firstBlame.path] = groupedDiagnosis[firstBlame.path] || []; 
+
         const diag = new vscode.Diagnostic(
             new vscode.Range(
                 new vscode.Position(firstBlame.line - 1, firstBlame.start - 1),
-                new vscode.Position(firstBlame.endLine - 1, firstBlame.end)
+                new vscode.Position(firstBlame.endline - 1, firstBlame.end)
             ),
             buildDiagnosticMessage(err),
             mapFlowDiagLevelToVSCode(err.level)
