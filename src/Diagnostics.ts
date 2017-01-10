@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import FlowLib from './FlowLib';
 import * as Path from 'path';
  
- const diagnostics = vscode.languages.createDiagnosticCollection('Flow-IDE');
+const diagnostics = vscode.languages.createDiagnosticCollection('Flow-IDE');
 
 export function setupDiagnostics(disposables: Array<vscode.Disposable>) {
     // Do an initial call to get diagnostics from the active editor if any
@@ -46,15 +46,16 @@ const buildOperationDiagnosticMessage = (err) => {
     return m.type === 'Blame' ? `${m.descr} (${Path.basename(m.path)}:${m.line}:${m.start})` : m.descr;
 };
 
+const buildRange = (firstBlame) => new vscode.Range(
+                new vscode.Position(firstBlame.line - 1, firstBlame.start - 1),
+                new vscode.Position(firstBlame.endline - 1, firstBlame.end)
+);
 const handleOperationError = (err, groupedDiagnosis) => {
      const firstBlame = err.operation;
         groupedDiagnosis[firstBlame.path] = groupedDiagnosis[firstBlame.path] || []; 
         const message = buildOperationDiagnosticMessage(err) + ' error: ' + buildDiagnosticMessage(err);
         const diag = new vscode.Diagnostic(
-            new vscode.Range(
-                new vscode.Position(firstBlame.line - 1, firstBlame.start - 1),
-                new vscode.Position(firstBlame.endline - 1, firstBlame.end)
-            ),
+            buildRange(firstBlame),
             message,
             mapFlowDiagLevelToVSCode(err.level)
         );
@@ -67,10 +68,7 @@ const handleError = (err, groupedDiagnosis) => {
         groupedDiagnosis[firstBlame.path] = groupedDiagnosis[firstBlame.path] || []; 
 
         const diag = new vscode.Diagnostic(
-            new vscode.Range(
-                new vscode.Position(firstBlame.line - 1, firstBlame.start - 1),
-                new vscode.Position(firstBlame.endline - 1, firstBlame.end)
-            ),
+            buildRange(firstBlame),
             buildDiagnosticMessage(err),
             mapFlowDiagLevelToVSCode(err.level)
         );
