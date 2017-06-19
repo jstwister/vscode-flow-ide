@@ -1,7 +1,7 @@
 /// <reference path="./cross-spawn.d.ts" />
 import { spawn } from 'cross-spawn';
 import * as vscode from 'vscode';
-import { determineFlowPath, checkFlow, checkNode } from './utils';
+import { determineFlowPath, checkFlow } from './utils';
 import * as path from 'path';
 import * as fs from  'fs';
 
@@ -12,7 +12,6 @@ const getPathToFlow = () => {
         return pathToFlow;
     }
     pathToFlow = determineFlowPath();
-    checkNode();
     checkFlow();
     return pathToFlow;
 };

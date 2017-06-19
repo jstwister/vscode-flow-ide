@@ -25,7 +25,6 @@ export function activate(context: vscode.ExtensionContext) {
     if (!isFlowEnabled()) {
         return false;
     }
-    console.log('Flow enabled!');
     // The registration needs to happen after a timeout because of 
     context.subscriptions.push(
         vscode.languages.registerSignatureHelpProvider(

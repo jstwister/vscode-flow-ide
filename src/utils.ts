@@ -14,14 +14,21 @@ export function getPathToFlowFromConfig(): string {
     return '';
 }
 
+export function nodeModuleFlowLocation(rootPath: string): string {
+	if (process.platform === 'win32') {
+		return `${rootPath}\\node_modules\\.bin\\flow.cmd`
+	} else {
+		return `${rootPath}/node_modules/.bin/flow`
+	}
+}
 export function determineFlowPath() {
     let pathToFlow = '';
-    const localInstall = getPathToFlowFromConfig() || `${workspace.rootPath}/node_modules/.bin/flow`;
-       if( fs.existsSync(localInstall) ) {
-           pathToFlow = localInstall;
-       } else {
-           pathToFlow = 'flow';
-       }
+    const localInstall = getPathToFlowFromConfig() || nodeModuleFlowLocation(workspace.rootPath);
+	if( fs.existsSync(localInstall) ) {
+		pathToFlow = localInstall;
+	} else {
+		pathToFlow = 'flow';
+	}
     return pathToFlow;
 }
 
@@ -29,31 +36,28 @@ export function isFlowEnabled() {
 	return workspace.getConfiguration('flowide').get('enabled')
 }
 
-export function checkNode() {
-	try {
-		const check = spawn(process.platform === 'win32' ? 'where' : 'which', ['node'])
-		let
-		  flowOutput = "",
-			flowOutputError = ""
-		check.stdout.on('data', function (data) {
-			flowOutput += data.toString();
-		})
-		check.stderr.on('data', function (data) {
-			flowOutputError += data.toString();
-		})
-		check.on('exit', function (code) {
-			if (code != 0) {
-				window.showErrorMessage(NODE_NOT_FOUND);
-			}
-		})
-	} catch(e) {
-		window.showErrorMessage(NODE_NOT_FOUND);
-	}
+function buildSearchFlowCommand(testPath: string): {command: string, args: Array<string>} {
+  if (process.platform !== 'win32') {
+    return {
+      command: 'which',
+      args: [testPath]
+    }
+  } else {
+    const splitCharLocation = testPath.lastIndexOf('\\')
+    const command = testPath.substring(splitCharLocation+1, testPath.length)
+    const searchDirectory = testPath.substring(0, splitCharLocation)
+    const args = !searchDirectory ? [command] : ['/r', searchDirectory, command]
+    return {
+      command: `${process.env.SYSTEMROOT || 'C:\\Windows'}\\System32\\where`,
+      args: args
+    }
+  }
 }
 
 export function checkFlow() {
 	try {
-		const check = spawn(process.platform === 'win32' ? 'where' : 'which', [determineFlowPath()])
+		const { command, args } = buildSearchFlowCommand(determineFlowPath());
+		const check = spawn(command, args);
 		let
 		  flowOutput = "",
 			flowOutputError = ""
