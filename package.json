@@ -21,6 +21,10 @@
       {
         "command": "flow.coverage",
         "title": "Flow-IDE: Toggle Flowtype coverage"
+      },
+      {
+        "command": "flow.path",
+        "title": "Flow-IDE: Show path to Flow"
       }
     ],
     "configuration": {

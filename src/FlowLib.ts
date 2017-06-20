@@ -7,7 +7,7 @@ import * as fs from  'fs';
 
 let pathToFlow = '';
 
-const getPathToFlow = () => {
+export const getPathToFlow = () => {
     if (pathToFlow) {
         return pathToFlow;
     }
@@ -78,7 +78,7 @@ export default class FlowLib {
                     
     }
     
-     static getCoverage(fileContents: string, fileName: string): any {
+    static getCoverage(fileContents: string, fileName: string): any {
         return FlowLib.execFlow(
                     fileContents,
                     fileName,
