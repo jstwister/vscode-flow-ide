@@ -26,6 +26,9 @@ Show types on hover
 * Make sure you gave NodeJS in path
 * Make sure you have Flow installed globally or locally. We recommnend
 using `flow-bin` NPM package.
+* If you get the error `'types' can only be used in a .ts file`,
+please set `javascript.validate.enable` option to `false`.
+
 
 ## Extension Settings
 This extension contributes the following settings:
