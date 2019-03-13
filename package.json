@@ -39,7 +39,17 @@
         "flowide.useCodeSnippetsOnFunctionSuggest": {
           "type": "boolean",
           "default": true,
-          "description": "Whether should autocomplete params name"
+          "description": "Whether to autocomplete params name"
+        },
+        "flowide.ignoreAutocomplete": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to ignore autocomplete"
+        },
+        "flowide.sortAutocompleteAfterEditorProperties": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to sort autocomplete items after the original editor properties and before globals"
         },
         "flowide.pathToFlow": {
           "type": "string",
