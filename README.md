@@ -23,7 +23,7 @@ Show types on hover
 ## Requirements
 
 * Have a `.flowconfig` file in project root
-* Make sure you gave NodeJS in path
+* Make sure you have NodeJS in path
 * Make sure you have Flow installed globally or locally. We recommnend
 using `flow-bin` NPM package.
 * If you get the error `'types' can only be used in a .ts file`,
