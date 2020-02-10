@@ -1,7 +1,10 @@
 /// <reference path="./cross-spawn.d.ts" />
 import { spawn } from 'cross-spawn';
 import {window, workspace} from 'vscode';
+import findRoot from 'find-root';
+import * as resolve from 'resolve';
 import * as fs from 'fs';
+import * as path from 'path';
 
 const NODE_NOT_FOUND = '[Flow] Cannot find node in PATH. The simpliest way to resolve it is install node globally'
 const FLOW_NOT_FOUND = '[Flow] Cannot find flow in PATH. Try to install it by npm install flow-bin -g'
@@ -9,7 +12,8 @@ const FLOW_NOT_FOUND = '[Flow] Cannot find flow in PATH. Try to install it by np
 export function getPathToFlowFromConfig(): string {
 	const config = workspace.getConfiguration('flowide');
     if (config) {
-        return config.get('pathToFlow').toString();
+				const pathToFlow = config.get('pathToFlow');
+				if (pathToFlow) return pathToFlow.toString();
     }
     return '';
 }
@@ -22,9 +26,10 @@ export function nodeModuleFlowLocation(rootPath: string): string {
 	}
 }
 export function determineFlowPath() {
-    let pathToFlow = '';
-    const localInstall = getPathToFlowFromConfig() || nodeModuleFlowLocation(workspace.rootPath);
-	if( fs.existsSync(localInstall) ) {
+		let pathToFlow = '';
+		const {rootPath} = workspace;
+    const localInstall = getPathToFlowFromConfig() || (rootPath && nodeModuleFlowLocation(rootPath));
+	if( localInstall && fs.existsSync(localInstall) ) {
 		pathToFlow = localInstall;
 	} else {
 		pathToFlow = 'flow';
@@ -75,4 +80,61 @@ export function checkFlow() {
 	} catch(e) {
 		window.showErrorMessage(FLOW_NOT_FOUND);
 	}
+}
+
+const flowBinCache: Map<string, string | null> = new Map();
+
+function cacheFlowBin(cwd: string, flowBin: string | null): void {
+	const root = findRoot(cwd);
+	do {
+		flowBinCache.set(cwd, flowBin);
+		cwd = path.dirname(cwd);
+	} while (cwd !== root);
+}
+
+function purgeFlowBin(cwd: string): void {
+	const root = findRoot(cwd);
+	do {
+		flowBinCache.delete(cwd);
+		cwd = path.dirname(cwd);
+	} while (cwd !== root);
+}
+
+function getFlowBin(cwd: string): string | null {
+	if (flowBinCache.has(cwd)) {
+		return flowBinCache.get(cwd) || null;
+	}
+	let result: string | null;
+	try {
+		// flow-bin exports the path to the binary
+		result = require(resolve.sync('flow-bin', {
+			basedir: cwd,
+		}));
+	} catch (error) {
+		result = null;
+	}
+	cacheFlowBin(cwd, result);
+
+	// purge the cached result if the binary changes
+	// (if no binary was found, watch package.json for changes)
+	const watcher = fs.watch(result || path.join(findRoot(cwd), 'package.json'));
+	watcher.once('change', () => {
+		watcher.close();
+		purgeFlowBin(cwd);
+	});
+	watcher.once('error', (err: Error) => {
+		console.error(err.stack);
+		watcher.close();
+	});
+
+	return result;
+}
+
+export function getPathToFlow(cwd: string): string {
+	const pathFromConfig = getPathToFlowFromConfig();
+	if (pathFromConfig) return pathFromConfig;
+	const flowBin = getFlowBin(cwd);
+	if (flowBin) return flowBin;
+	checkFlow();
+	return determineFlowPath();
 }

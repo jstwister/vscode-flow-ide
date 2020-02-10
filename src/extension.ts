@@ -5,7 +5,6 @@ import SignatureProvider from './SignatureProvider';
 import DefinitionProvider from './DefinitionProvider';
 import { setupDiagnostics } from './Diagnostics';
 import { isFlowEnabled } from './utils';
-import { getPathToFlow } from './FlowLib';
 'use strict';
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -63,11 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
         coverage.toggleDecorations();
         coverage.refreshCoverage();
    };
-   const showFlowPath = () => {
-       vscode.window.showInformationMessage(`Path to flow set to:${getPathToFlow()}`);
-   }
    vscode.commands.registerCommand('flow.coverage', refreshCoverage);
-   vscode.commands.registerCommand('flow.path', showFlowPath);
    setupDiagnostics(context.subscriptions);
 }
 

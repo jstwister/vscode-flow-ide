@@ -1,20 +1,9 @@
 /// <reference path="./cross-spawn.d.ts" />
 import { spawn } from 'cross-spawn';
 import * as vscode from 'vscode';
-import { determineFlowPath, checkFlow } from './utils';
+import { getPathToFlow } from './utils';
 import * as path from 'path';
 import * as fs from  'fs';
-
-let pathToFlow = '';
-
-export const getPathToFlow = () => {
-    if (pathToFlow) {
-        return pathToFlow;
-    }
-    pathToFlow = determineFlowPath();
-    checkFlow();
-    return pathToFlow;
-};
 
 export default class FlowLib {
     static execFlow(fileContents, filename, args) {
@@ -25,7 +14,7 @@ export default class FlowLib {
             const cwd = path.dirname(filename);
             let flowOutput = "";
 			let flowOutputError = "";
-            const flowProc = spawn(getPathToFlow(), args, { cwd: cwd });
+            const flowProc = spawn(getPathToFlow(cwd), args, { cwd: cwd });
             flowProc.stdout.on('data', (data) => {
                flowOutput += data.toString();
             });
