@@ -22,12 +22,9 @@ export default class CoverageDecorations {
         );
     }
     refreshCoverage() {
-        vscode.window.visibleTextEditors.forEach((editor) => {
-            this.getCoverage(editor).then((coverageResp) => {
-                if (coverageResp) {
-                    this.coverageUpdated(coverageResp, editor);
-                }
-            });
+        vscode.window.visibleTextEditors.forEach(async (editor): Promise<void> => {
+            const coverage = await this.getCoverage(editor);
+            if (coverage) this.coverageUpdated(coverage, editor);
         });
     }
     toggleDecorations() {
@@ -58,17 +55,12 @@ export default class CoverageDecorations {
             new vscode.Range(detail.start.line - 1, detail.start.column - 1, detail.end.line - 1, detail.end.column)
         ));
     }
-    getCoverage(editor): any {
+    async getCoverage(editor): Promise<any> {
         const filename = editor.document.uri.fsPath;
         const text = editor.document.getText();
-        if(!text) {
-            return new Promise((resolve, reject) => resolve());
-        }
-        return FlowLib.getCoverage(text, filename).then((coverage) => {
-            if(coverage) {
-                return coverage.expressions;
-            } 
-        });
+        if (!text) return null;
+        const coverage = await FlowLib.getCoverage(text, filename);
+        if (coverage) return coverage.expressions;
     }
     _updateEditor(editor, filename) {
         if (!editor) {

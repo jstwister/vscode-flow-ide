@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as fs from  'fs';
 
 export default class FlowLib {
-    static execFlow(fileContents, filename, args) {
+    static execFlow(fileContents, filename, args): Promise<any> {
         return new Promise((resolve, reject) => {
             if (!fs.existsSync(filename)) {
                 resolve(undefined);
@@ -43,28 +43,28 @@ export default class FlowLib {
         });
     }
 
-    static getTypeAtPos(fileContents: string, fileName, pos: vscode.Position) {
+    static getTypeAtPos(fileContents: string, fileName, pos: vscode.Position): Promise<any> {
         return FlowLib.execFlow(
                     fileContents,
                     fileName,  
                     ['type-at-pos', '--json', '--pretty', '--path', fileName, pos.line + 1, pos.character + 1]);
     }
 
-    static getDiagnostics(fileContents: string, fileName: string): any {
+    static getDiagnostics(fileContents: string, fileName: string): Promise<any> {
         return FlowLib.execFlow(
                     fileContents,
                     fileName,  
                     ['status', '--json']);
     }
 
-    static getAutocomplete(fileContents: string, fileName: string, pos: vscode.Position): any {
+    static getAutocomplete(fileContents: string, fileName: string, pos: vscode.Position): Promise<any> {
         return FlowLib.execFlow(
                     fileContents,
                     fileName,  
                     ['autocomplete', '--json', fileName, pos.line + 1, pos.character + 1]);
     }
 
-    static getDefinition(fileContents: string, fileName: string, pos: vscode.Position): any {
+    static getDefinition(fileContents: string, fileName: string, pos: vscode.Position): Promise<any> {
         return FlowLib.execFlow(
                     fileContents,
                     fileName,  
@@ -73,7 +73,7 @@ export default class FlowLib {
                     
     }
     
-    static getCoverage(fileContents: string, fileName: string): any {
+    static getCoverage(fileContents: string, fileName: string): Promise<any> {
         return FlowLib.execFlow(
                     fileContents,
                     fileName,

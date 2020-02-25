@@ -31,20 +31,21 @@ const buildCodeSnippet = (item) => {
 }
 
 export default class AutocompleteProvider {
-    provideCompletionItems(
+    async provideCompletionItems(
         document: vscode.TextDocument,
         position: vscode.Position,
         token: vscode.CancellationToken
-    ):any {
+    ): Promise<vscode.CompletionItem[] | null> {
         const fileContents = document.getText();
-        const autocompletePromise = FlowLib.getAutocomplete(fileContents, document.uri.fsPath, position);
-        return autocompletePromise.then((completions) => {
-           return completions.result.map((item) => {
+        const completions = await FlowLib.getAutocomplete(fileContents, document.uri.fsPath, position);
+        if (completions) {
+            return completions.result.map((item) => {
               const completionItem =  new vscode.CompletionItem(item.name, mapToVSCodeType(item));
               completionItem.insertText = buildCodeSnippet(item);
               completionItem.detail = item.type ? item.type : Path.basename(item.path);
               return completionItem;
             });
-        });
+        }
+        return null;
     }
 }

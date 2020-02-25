@@ -90,10 +90,8 @@ const mapFlowDiagToVSCode = (errors) => {
     });
     return groupedDiagnosis;
 }
-const updateDiagnostics = (document: vscode.TextDocument) => {
-    if (!document) {
-        return;
-    }
+const updateDiagnostics = async (document: vscode.TextDocument): Promise<boolean | void> => {
+    if (!document) return;
     const filename = document.uri.fsPath;
     const base = Path.basename(filename);
     if (
@@ -103,12 +101,11 @@ const updateDiagnostics = (document: vscode.TextDocument) => {
             return false;
     }
     diagnostics.clear();   
-    fetchFlowDiagnostic(document.getText(), filename).then((flowDiag) => {
-        if (flowDiag && flowDiag.errors) {
-            const vscodeDiagByFile = mapFlowDiagToVSCode(flowDiag.errors);
-            Object.keys(vscodeDiagByFile).forEach((file) => {
-                diagnostics.set( vscode.Uri.file(file), vscodeDiagByFile[file]);
-            });
-        }
-    });
+    const flowDiag = await FlowLib.getDiagnostics(document.getText(), filename);
+    if (flowDiag && flowDiag.errors) {
+        const vscodeDiagByFile = mapFlowDiagToVSCode(flowDiag.errors);
+        Object.keys(vscodeDiagByFile).forEach((file) => {
+            diagnostics.set( vscode.Uri.file(file), vscodeDiagByFile[file]);
+        });
+    }
 }
