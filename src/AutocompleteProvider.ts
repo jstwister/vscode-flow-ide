@@ -15,7 +15,7 @@ const mapToVSCodeType = (item) => {
 const buildCodeSnippet = (item) => {
     let codeSnippet = item.name;
     const config = vscode.workspace.getConfiguration('flowide');
-    if (config.get('use CodeSnippetsOnFunctionSuggest')) {
+    if (config.get('useCodeSnippetsOnFunctionSuggest')) {
         if (item.func_details && item.func_details.params) {
             const suggestionArgumentNames = item.func_details.params
                                 .map((param) => `{{${param.name.replace('?', '')}}}`);

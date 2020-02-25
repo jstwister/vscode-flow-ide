@@ -1,14 +1,14 @@
 {
   "name": "vscode-flow-ide",
   "displayName": "vscode-flow-ide",
-  "description": "Visual studio code Flowtype support",
-  "version": "1.2.0",
-  "publisher": "gcazaciuc",
+  "description": "fork of vscode-flow-ide that uses flow-bin installed in each directory",
+  "version": "1.2.2",
+  "publisher": "jedwards1211",
   "engines": {
     "vscode": "^1.6.0"
   },
   "categories": [
-    "Languages",
+    "Programming Languages",
     "Linters"
   ],
   "activationEvents": [
@@ -40,11 +40,6 @@
           "type": "boolean",
           "default": true,
           "description": "Whether should autocomplete params name"
-        },
-        "flowide.pathToFlow": {
-          "type": "string",
-          "default": "",
-          "description": "Path to flow binary"
         }
       }
     }

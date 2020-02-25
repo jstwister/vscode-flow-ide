@@ -10,11 +10,17 @@ export default class FlowLib {
         return new Promise((resolve, reject) => {
             if (!fs.existsSync(filename)) {
                 resolve(undefined);
+                return;
             }
             const cwd = path.dirname(filename);
+            const flowBin = getPathToFlow(cwd)
+            if (!flowBin) {
+                resolve(undefined);
+                return;
+            }
             let flowOutput = "";
 			let flowOutputError = "";
-            const flowProc = spawn(getPathToFlow(cwd), args, { cwd: cwd });
+            const flowProc = spawn(flowBin, args, { cwd: cwd });
             flowProc.stdout.on('data', (data) => {
                flowOutput += data.toString();
             });
