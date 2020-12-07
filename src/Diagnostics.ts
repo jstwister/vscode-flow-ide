@@ -1,111 +1,125 @@
-import {error} from 'util';
-import {mkdir} from 'fs';
-import * as vscode from 'vscode';
-import FlowLib from './FlowLib';
-import * as Path from 'path';
- 
-const diagnostics = vscode.languages.createDiagnosticCollection('Flow-IDE');
+import * as vscode from 'vscode'
+import FlowLib from './FlowLib'
+import * as Path from 'path'
 
-export function setupDiagnostics(disposables: Array<vscode.Disposable>) {
-    // Do an initial call to get diagnostics from the active editor if any
-	if (vscode.window.activeTextEditor) {
-		updateDiagnostics(vscode.window.activeTextEditor.document);
-	}
+const diagnostics = vscode.languages.createDiagnosticCollection('Flow-IDE')
 
-	// Update diagnostics: when active text editor changes
-	disposables.push(vscode.window.onDidChangeActiveTextEditor(editor => {
-        const document = editor && editor.document;
-		if (document) updateDiagnostics(document);
-	}));
+export function setupDiagnostics(
+  disposables: Array<vscode.Disposable>,
+  { channel }: { channel: vscode.OutputChannel }
+) {
+  // Do an initial call to get diagnostics from the active editor if any
+  if (vscode.window.activeTextEditor) {
+    updateDiagnostics(vscode.window.activeTextEditor.document, { channel })
+  }
 
-	// Update diagnostics when document is edited
-	disposables.push(vscode.workspace.onDidSaveTextDocument(event => {
-		if (vscode.window.activeTextEditor) {
-			updateDiagnostics(vscode.window.activeTextEditor.document);
-		}
-	}));
-}
+  // Update diagnostics: when active text editor changes
+  disposables.push(
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      const document = editor && editor.document
+      if (document) updateDiagnostics(document, { channel })
+    })
+  )
 
-const fetchFlowDiagnostic = (fileContents: string, filename: string) => {
-    return FlowLib.getDiagnostics(fileContents, filename);
+  // Update diagnostics when document is edited
+  disposables.push(
+    vscode.workspace.onDidSaveTextDocument((event) => {
+      if (vscode.window.activeTextEditor) {
+        updateDiagnostics(vscode.window.activeTextEditor.document, { channel })
+      }
+    })
+  )
 }
 
 const mapFlowDiagLevelToVSCode = (flowDiagLevel) => {
-    switch(flowDiagLevel) {
-        case 'error':
-            return vscode.DiagnosticSeverity.Error;
-    }
+  switch (flowDiagLevel) {
+    case 'error':
+      return vscode.DiagnosticSeverity.Error
+  }
 }
 const buildDiagnosticMessage = (err) => {
-    return err.message.map((m) => {
-       return m.type === 'Blame' ? `${m.descr} (${Path.basename(m.path)}:${m.line}:${m.start})` : m.descr
-    }).join(' ');
-};
+  return err.message
+    .map((m) => {
+      return m.type === 'Blame'
+        ? `${m.descr} (${Path.basename(m.path)}:${m.line}:${m.start})`
+        : m.descr
+    })
+    .join(' ')
+}
 
 const buildOperationDiagnosticMessage = (err) => {
-    let m = err.operation;
-    return m.type === 'Blame' ? `${m.descr} (${Path.basename(m.path)}:${m.line}:${m.start})` : m.descr;
-};
+  let m = err.operation
+  return m.type === 'Blame'
+    ? `${m.descr} (${Path.basename(m.path)}:${m.line}:${m.start})`
+    : m.descr
+}
 
-const buildRange = (firstBlame) => new vscode.Range(
-                new vscode.Position(firstBlame.line - 1, firstBlame.start - 1),
-                new vscode.Position(firstBlame.endline - 1, firstBlame.end)
-);
+const buildRange = (firstBlame) =>
+  new vscode.Range(
+    new vscode.Position(firstBlame.line - 1, firstBlame.start - 1),
+    new vscode.Position(firstBlame.endline - 1, firstBlame.end)
+  )
 const handleOperationError = (err, groupedDiagnosis) => {
-     const firstBlame = err.operation;
-        groupedDiagnosis[firstBlame.path] = groupedDiagnosis[firstBlame.path] || []; 
-        const message = buildOperationDiagnosticMessage(err) + ' error: ' + buildDiagnosticMessage(err);
-        const diag = new vscode.Diagnostic(
-            buildRange(firstBlame),
-            message,
-            mapFlowDiagLevelToVSCode(err.level)
-        );
-        diag.source = 'flow'
-        groupedDiagnosis[firstBlame.path].push(diag);
+  const firstBlame = err.operation
+  groupedDiagnosis[firstBlame.path] = groupedDiagnosis[firstBlame.path] || []
+  const message =
+    buildOperationDiagnosticMessage(err) +
+    ' error: ' +
+    buildDiagnosticMessage(err)
+  const diag = new vscode.Diagnostic(
+    buildRange(firstBlame),
+    message,
+    mapFlowDiagLevelToVSCode(err.level)
+  )
+  diag.source = 'flow'
+  groupedDiagnosis[firstBlame.path].push(diag)
 }
 
 const handleError = (err, groupedDiagnosis) => {
-    const firstBlame = err.message.find ((m) => m.type === 'Blame');
-        groupedDiagnosis[firstBlame.path] = groupedDiagnosis[firstBlame.path] || []; 
+  const firstBlame = err.message.find((m) => m.type === 'Blame')
+  groupedDiagnosis[firstBlame.path] = groupedDiagnosis[firstBlame.path] || []
 
-        const diag = new vscode.Diagnostic(
-            buildRange(firstBlame),
-            buildDiagnosticMessage(err),
-            mapFlowDiagLevelToVSCode(err.level)
-        );
-        diag.source = 'flow'
-        groupedDiagnosis[firstBlame.path].push(diag);
+  const diag = new vscode.Diagnostic(
+    buildRange(firstBlame),
+    buildDiagnosticMessage(err),
+    mapFlowDiagLevelToVSCode(err.level)
+  )
+  diag.source = 'flow'
+  groupedDiagnosis[firstBlame.path].push(diag)
 }
-
 
 const mapFlowDiagToVSCode = (errors) => {
-    const groupedDiagnosis = {};
-    errors.forEach((err) => {
-        if(err.operation && err.operation.type === "Blame") {
-            handleOperationError(err, groupedDiagnosis);
-        } else {
-            handleError(err, groupedDiagnosis);
-        }
-        
-    });
-    return groupedDiagnosis;
+  const groupedDiagnosis = {}
+  errors.forEach((err) => {
+    if (err.operation && err.operation.type === 'Blame') {
+      handleOperationError(err, groupedDiagnosis)
+    } else {
+      handleError(err, groupedDiagnosis)
+    }
+  })
+  return groupedDiagnosis
 }
-const updateDiagnostics = async (document: vscode.TextDocument): Promise<boolean | void> => {
-    if (!document) return;
-    const filename = document.uri.fsPath;
-    const base = Path.basename(filename);
-    if (
-        !/\.js$/.test(base) && 
-        !/\.jsx$/.test(base) &&
-        !/\.es6$/.test(base)) {
-            return false;
+const updateDiagnostics = async (
+  document: vscode.TextDocument,
+  { channel }: { channel: vscode.OutputChannel }
+): Promise<boolean | void> => {
+  try {
+    if (!document) return
+    const filename = document.uri.fsPath
+    const base = Path.basename(filename)
+    if (!/\.(js|jsx|mjs|es6)$/.test(base)) {
+      return false
     }
-    diagnostics.clear();   
-    const flowDiag = await FlowLib.getDiagnostics(document.getText(), filename);
+    diagnostics.clear()
+    const flowDiag = await FlowLib.getDiagnostics(document.getText(), filename)
     if (flowDiag && flowDiag.errors) {
-        const vscodeDiagByFile = mapFlowDiagToVSCode(flowDiag.errors);
-        Object.keys(vscodeDiagByFile).forEach((file) => {
-            diagnostics.set( vscode.Uri.file(file), vscodeDiagByFile[file]);
-        });
+      const vscodeDiagByFile = mapFlowDiagToVSCode(flowDiag.errors)
+      Object.keys(vscodeDiagByFile).forEach((file) => {
+        diagnostics.set(vscode.Uri.file(file), vscodeDiagByFile[file])
+      })
     }
+  } catch (error) {
+    channel.appendLine(error.stack)
+    throw error
+  }
 }
