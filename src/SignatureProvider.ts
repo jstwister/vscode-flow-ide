@@ -24,7 +24,7 @@ export default class SignatureProvider implements vscode.SignatureHelpProvider {
             
             return autocompletePromise.then((completions) => {
                 const res = completions.result;
-                const item = res.find((c) => c.func_details !== null && c.name === callerName);
+                const item = res.find((c) => c.func_details != null && c.name === callerName);
                 if (!item) {
                     return null;
                 }
