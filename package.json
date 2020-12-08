@@ -2,7 +2,7 @@
   "name": "vscode-flow-ide",
   "displayName": "vscode-flow-ide",
   "description": "fork of vscode-flow-ide that uses flow-bin installed in each directory",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "publisher": "jedwards1211",
   "engines": {
     "vscode": "^1.51.0"
@@ -35,6 +35,11 @@
           "type": "boolean",
           "default": true,
           "description": "Whether should autocomplete params name"
+        },
+        "flowide.showErrorNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to show notifications when errors occur in this extension"
         }
       }
     }

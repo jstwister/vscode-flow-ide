@@ -1,12 +1,12 @@
 import * as vscode from 'vscode'
-import FlowLib from './FlowLib'
+import { Extension } from './extension'
 const beautify = require('js-beautify').js_beautify
 
 export default class HoverProvider {
-  private channel: vscode.OutputChannel
+  private extension: Extension
 
-  constructor({ channel }: { channel: vscode.OutputChannel }) {
-    this.channel = channel
+  constructor(extension: Extension) {
+    this.extension = extension
   }
 
   async provideHover(
@@ -18,10 +18,11 @@ export default class HoverProvider {
       const wordPosition = document.getWordRangeAtPosition(position)
       if (!wordPosition) return null
       const word = document.getText(wordPosition)
-      const typeAtPos = await FlowLib.getTypeAtPos(
+      const typeAtPos = await this.extension.flowLib.getTypeAtPos(
         document.getText(),
         document.uri.fsPath,
-        position
+        position,
+        { token }
       )
       if (!typeAtPos) return null
       try {
@@ -33,8 +34,8 @@ export default class HoverProvider {
       } catch (error) {}
       return null
     } catch (error) {
-      this.channel.appendLine(error.stack)
-      throw error
+      if (!token.isCancellationRequested) this.extension.logError(error)
+      return null
     }
   }
 }

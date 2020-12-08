@@ -1,11 +1,11 @@
 import * as vscode from 'vscode'
-import FlowLib from './FlowLib'
+import { Extension } from './extension'
 
 export default class SignatureProvider implements vscode.SignatureHelpProvider {
-  private channel: vscode.OutputChannel
+  private extension: Extension
 
-  constructor({ channel }: { channel: vscode.OutputChannel }) {
-    this.channel = channel
+  constructor(extension: Extension) {
+    this.extension = extension
   }
 
   public async provideSignatureHelp(
@@ -30,16 +30,17 @@ export default class SignatureProvider implements vscode.SignatureHelpProvider {
       const strToAutocomplete =
         fileContents.slice(0, callerEndPosOffset) +
         fileContents.slice(currentPosOffset)
-      const completions = await FlowLib.getAutocomplete(
+      const completions = await this.extension.flowLib.getAutocomplete(
         strToAutocomplete,
         document.uri.fsPath,
-        callerPos
+        callerPos,
+        { token }
       )
 
       if (!completions) return null
       const res = completions.result
       const item = res.find(
-        (c) => c.func_details !== null && c.name === callerName
+        (c) => c.func_details != null && c.name === callerName
       )
       if (!item) {
         return null
@@ -57,8 +58,8 @@ export default class SignatureProvider implements vscode.SignatureHelpProvider {
       signatureHelp.activeSignature = 0
       return signatureHelp
     } catch (error) {
-      this.channel.appendLine(error.stack)
-      throw error
+      if (!token.isCancellationRequested) this.extension.logError(error)
+      return null
     }
   }
   private previousTokenPosition(

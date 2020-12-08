@@ -1,7 +1,7 @@
-import * as console from 'console'
 import * as vscode from 'vscode'
-import FlowLib from './FlowLib'
 import * as Path from 'path'
+import { Extension } from './extension'
+
 const mapToVSCodeType = (item) => {
   if (item.func_details !== null) {
     return vscode.CompletionItemKind.Function
@@ -32,10 +32,10 @@ const buildCodeSnippet = (item) => {
 }
 
 export default class AutocompleteProvider {
-  private channel: vscode.OutputChannel
+  private extension: Extension
 
-  constructor({ channel }: { channel: vscode.OutputChannel }) {
-    this.channel = channel
+  constructor(extension: Extension) {
+    this.extension = extension
   }
 
   async provideCompletionItems(
@@ -45,10 +45,11 @@ export default class AutocompleteProvider {
   ): Promise<vscode.CompletionItem[] | null> {
     try {
       const fileContents = document.getText()
-      const completions = await FlowLib.getAutocomplete(
+      const completions = await this.extension.flowLib.getAutocomplete(
         fileContents,
         document.uri.fsPath,
-        position
+        position,
+        { token }
       )
       if (completions) {
         return completions.result.map((item) => {
@@ -65,8 +66,8 @@ export default class AutocompleteProvider {
       }
       return null
     } catch (error) {
-      this.channel.appendLine(error.stack)
-      throw error
+      if (!token.isCancellationRequested) this.extension.logError(error)
+      return null
     }
   }
 }

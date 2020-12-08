@@ -1,11 +1,11 @@
 import * as vscode from 'vscode'
-import FlowLib from './FlowLib'
+import { Extension } from './extension'
 
 export default class DefinitionProvider {
-  private channel: vscode.OutputChannel
+  private extension: Extension
 
-  constructor({ channel }: { channel: vscode.OutputChannel }) {
-    this.channel = channel
+  constructor(extension: Extension) {
+    this.extension = extension
   }
 
   async provideDefinition(
@@ -15,10 +15,11 @@ export default class DefinitionProvider {
   ): Promise<vscode.Location | vscode.Location[] | null> {
     try {
       const fileContents = document.getText()
-      const definition = await FlowLib.getDefinition(
+      const definition = await this.extension.flowLib.getDefinition(
         fileContents,
         document.uri.fsPath,
-        position
+        position,
+        { token }
       )
       if (definition && definition.path) {
         const startPosition = new vscode.Position(
@@ -38,8 +39,8 @@ export default class DefinitionProvider {
       }
       return null
     } catch (error) {
-      this.channel.appendLine(error.stack)
-      throw error
+      if (!token.isCancellationRequested) this.extension.logError(error)
+      return null
     }
   }
 }

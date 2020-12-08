@@ -1,23 +1,23 @@
 import * as vscode from 'vscode'
-import FlowLib from './FlowLib'
 import * as Path from 'path'
+import { Extension } from './extension'
 
 const diagnostics = vscode.languages.createDiagnosticCollection('Flow-IDE')
 
 export function setupDiagnostics(
   disposables: Array<vscode.Disposable>,
-  { channel }: { channel: vscode.OutputChannel }
+  extension: Extension
 ) {
   // Do an initial call to get diagnostics from the active editor if any
   if (vscode.window.activeTextEditor) {
-    updateDiagnostics(vscode.window.activeTextEditor.document, { channel })
+    updateDiagnostics(vscode.window.activeTextEditor.document, extension)
   }
 
   // Update diagnostics: when active text editor changes
   disposables.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       const document = editor && editor.document
-      if (document) updateDiagnostics(document, { channel })
+      if (document) updateDiagnostics(document, extension)
     })
   )
 
@@ -25,7 +25,7 @@ export function setupDiagnostics(
   disposables.push(
     vscode.workspace.onDidSaveTextDocument((event) => {
       if (vscode.window.activeTextEditor) {
-        updateDiagnostics(vscode.window.activeTextEditor.document, { channel })
+        updateDiagnostics(vscode.window.activeTextEditor.document, extension)
       }
     })
   )
@@ -101,7 +101,7 @@ const mapFlowDiagToVSCode = (errors) => {
 }
 const updateDiagnostics = async (
   document: vscode.TextDocument,
-  { channel }: { channel: vscode.OutputChannel }
+  extension: Extension
 ): Promise<boolean | void> => {
   try {
     if (!document) return
@@ -111,7 +111,10 @@ const updateDiagnostics = async (
       return false
     }
     diagnostics.clear()
-    const flowDiag = await FlowLib.getDiagnostics(document.getText(), filename)
+    const flowDiag = await extension.flowLib.getDiagnostics(
+      document.getText(),
+      filename
+    )
     if (flowDiag && flowDiag.errors) {
       const vscodeDiagByFile = mapFlowDiagToVSCode(flowDiag.errors)
       Object.keys(vscodeDiagByFile).forEach((file) => {
@@ -119,7 +122,6 @@ const updateDiagnostics = async (
       })
     }
   } catch (error) {
-    channel.appendLine(error.stack)
-    throw error
+    extension.logError(error)
   }
 }

@@ -1,16 +1,15 @@
 import * as vscode from 'vscode'
-import FlowLib from './FlowLib'
+import { Extension } from './extension'
 
 export default class CoverageDecorations {
   private notCoveredLine: vscode.TextEditorDecorationType
-  private _listener: vscode.Disposable
   private coverageData: any
   private _decorationsOn: boolean
   private _statusBar: vscode.StatusBarItem
-  private channel: vscode.OutputChannel
+  private extension: Extension
 
-  constructor(disposables, { channel }: { channel: vscode.OutputChannel }) {
-    this.channel = channel
+  constructor(disposables, extension: Extension) {
+    this.extension = extension
     this.notCoveredLine = vscode.window.createTextEditorDecorationType({
       backgroundColor: 'darkred',
     })
@@ -34,8 +33,7 @@ export default class CoverageDecorations {
           const coverage = await this.getCoverage(editor)
           if (coverage) this.coverageUpdated(coverage, editor)
         } catch (error) {
-          this.channel.appendLine(error.stack)
-          throw error
+          this.extension.logError(error)
         }
       }
     )
@@ -80,7 +78,7 @@ export default class CoverageDecorations {
     const filename = editor.document.uri.fsPath
     const text = editor.document.getText()
     if (!text) return null
-    const coverage = await FlowLib.getCoverage(text, filename)
+    const coverage = await this.extension.flowLib.getCoverage(text, filename)
     if (coverage) return coverage.expressions
   }
   _updateEditor(editor, filename) {

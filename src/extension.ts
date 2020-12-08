@@ -5,6 +5,7 @@ import SignatureProvider from './SignatureProvider'
 import DefinitionProvider from './DefinitionProvider'
 import { setupDiagnostics } from './Diagnostics'
 import * as vscode from 'vscode'
+import FlowLib from './FlowLib'
 
 const supportedLanguages = ['javascriptreact', 'javascript']
 
@@ -13,17 +14,35 @@ const documentSelector = supportedLanguages.map((language) => ({
   scheme: 'file',
 }))
 
-export function activate(context: vscode.ExtensionContext) {
-  const channel: vscode.OutputChannel = vscode.window.createOutputChannel(
+export class Extension {
+  channel: vscode.OutputChannel = vscode.window.createOutputChannel(
     'vscode-flow-ide'
   )
-  context.subscriptions.push(channel)
+  flowLib: FlowLib = new FlowLib(this)
+
+  get subscriptions(): vscode.Disposable[] {
+    return [this.channel]
+  }
+
+  logError(error: Error) {
+    const message = `ERROR: ${error.stack || error.message || String(error)}`
+    this.channel.appendLine(message)
+    const config = vscode.workspace.getConfiguration('flowide')
+    if (config.showErrorNotifications) {
+      vscode.window.showErrorMessage(message)
+    }
+  }
+}
+
+export function activate(context: vscode.ExtensionContext) {
+  const extension = new Extension()
+  context.subscriptions.push(...extension.subscriptions)
 
   // The registration needs to happen after a timeout because of
   context.subscriptions.push(
     vscode.languages.registerSignatureHelpProvider(
       documentSelector,
-      new SignatureProvider({ channel }),
+      new SignatureProvider(extension),
       '(',
       '.'
     )
@@ -32,14 +51,14 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.languages.registerHoverProvider(
       documentSelector,
-      new HoverProvider({ channel })
+      new HoverProvider(extension)
     )
   )
 
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(
       documentSelector,
-      new AutocompleteProvider({ channel }),
+      new AutocompleteProvider(extension),
       '.'
     )
   )
@@ -47,17 +66,17 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.languages.registerDefinitionProvider(
       documentSelector,
-      new DefinitionProvider({ channel })
+      new DefinitionProvider(extension)
     )
   )
 
-  const coverage = new CoverageProvider(context.subscriptions, { channel })
+  const coverage = new CoverageProvider(context.subscriptions, extension)
   const refreshCoverage = () => {
     coverage.toggleDecorations()
     coverage.refreshCoverage()
   }
   vscode.commands.registerCommand('flow.coverage', refreshCoverage)
-  setupDiagnostics(context.subscriptions, { channel })
+  setupDiagnostics(context.subscriptions, extension)
 }
 
 // this method is called when your extension is deactivated
