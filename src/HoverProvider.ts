@@ -26,19 +26,18 @@ export default class HoverProvider {
       )
       if (!typeAtPos) return null
       let value = `type ${word} = ${typeAtPos.type}`
-      try {
-        value = prettier.format(`type ${word} = ${typeAtPos.type}`, {
-          semi: false,
-          parser: 'flow',
-          trailingComma: 'es5',
-        })
-      } catch (error) {
+      for (const candidate of [
+        `type ${word} = ${typeAtPos.type}`,
+        `type _${word}_ = ${typeAtPos.type}`,
+        typeAtPos.type,
+      ]) {
         try {
-          value = prettier.format(`type _${word}_ = ${typeAtPos.type}`, {
+          value = prettier.format(candidate, {
             semi: false,
             parser: 'flow',
             trailingComma: 'es5',
           })
+          break
         } catch (error) {}
       }
       return new vscode.Hover([
