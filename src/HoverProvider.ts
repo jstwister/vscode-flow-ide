@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { Extension } from './extension'
-const beautify = require('js-beautify').js_beautify
+import prettier from 'prettier'
 
 export default class HoverProvider {
   private extension: Extension
@@ -25,14 +25,26 @@ export default class HoverProvider {
         { token }
       )
       if (!typeAtPos) return null
+      let value = `type ${word} = ${typeAtPos.type}`
       try {
-        const beautifiedData = beautify(typeAtPos.type, { indent_size: 4 })
-        return new vscode.Hover([
-          'Flow-IDE',
-          { language: 'javascriptreact', value: `${word}: ${beautifiedData}` },
-        ])
-      } catch (error) {}
-      return null
+        value = prettier.format(`type ${word} = ${typeAtPos.type}`, {
+          semi: false,
+          parser: 'flow',
+          trailingComma: 'es5',
+        })
+      } catch (error) {
+        try {
+          value = prettier.format(`type _${word}_ = ${typeAtPos.type}`, {
+            semi: false,
+            parser: 'flow',
+            trailingComma: 'es5',
+          })
+        } catch (error) {}
+      }
+      return new vscode.Hover([
+        'vscode-flow-ide',
+        { language: 'javascriptreact', value },
+      ])
     } catch (error) {
       if (!token.isCancellationRequested) this.extension.logError(error)
       return null

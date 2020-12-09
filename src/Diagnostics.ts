@@ -2,7 +2,9 @@ import * as vscode from 'vscode'
 import * as Path from 'path'
 import { Extension } from './extension'
 
-const diagnostics = vscode.languages.createDiagnosticCollection('Flow-IDE')
+const diagnostics = vscode.languages.createDiagnosticCollection(
+  'vscode-flow-ide'
+)
 
 export function setupDiagnostics(
   disposables: Array<vscode.Disposable>,
