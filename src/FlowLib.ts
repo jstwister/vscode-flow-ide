@@ -14,19 +14,30 @@ function formatArg(arg: string): string {
 const flowBinCache: Map<string, string | null> = new Map()
 
 function cacheFlowBin(cwd: string, flowBin: string | null): void {
-  const root = findRoot(cwd)
+  let realpath = fs.realpathSync(cwd)
+  const root = findRoot(realpath)
   do {
     flowBinCache.set(cwd, flowBin)
+    flowBinCache.set(realpath, flowBin)
     cwd = path.dirname(cwd)
-  } while (cwd !== root)
+    const nextRealpath = path.dirname(realpath)
+    if (realpath === root || nextRealpath === realpath) break
+    realpath = nextRealpath
+  } while (realpath && realpath !== root)
 }
 
 function purgeFlowBin(cwd: string): void {
-  const root = findRoot(cwd)
+  let realpath = fs.realpathSync(cwd)
+  const root = findRoot(realpath)
   do {
     flowBinCache.delete(cwd)
+    flowBinCache.delete(realpath)
+    if (realpath === root) break
     cwd = path.dirname(cwd)
-  } while (cwd !== root)
+    const nextRealpath = path.dirname(realpath)
+    if (realpath === root || nextRealpath === realpath) break
+    realpath = nextRealpath
+  } while (realpath && realpath !== root)
 }
 
 type ExecFlowOptions = {
