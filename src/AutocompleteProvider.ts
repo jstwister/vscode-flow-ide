@@ -43,6 +43,7 @@ export default class AutocompleteProvider {
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.CompletionItem[] | null> {
+    if (!Path.isAbsolute(document.uri.fsPath)) return null
     try {
       const fileContents = document.getText()
       const completions = await this.extension.flowLib.getAutocomplete({

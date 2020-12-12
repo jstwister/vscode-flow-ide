@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as Path from 'path'
 import { Extension } from './extension'
 
 export default class SignatureProvider implements vscode.SignatureHelpProvider {
@@ -13,6 +14,8 @@ export default class SignatureProvider implements vscode.SignatureHelpProvider {
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.SignatureHelp | null> {
+    const fileName = document.uri.fsPath
+    if (!Path.isAbsolute(fileName)) return null
     try {
       let theCall = this.walkBackwardsToBeginningOfCall(document, position)
       if (theCall == null) return null
@@ -32,7 +35,7 @@ export default class SignatureProvider implements vscode.SignatureHelpProvider {
         fileContents.slice(currentPosOffset)
       const completions = await this.extension.flowLib.getAutocomplete({
         fileContents: strToAutocomplete,
-        fileName: document.uri.fsPath,
+        fileName,
         position: callerPos,
         token,
       })

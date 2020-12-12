@@ -14,14 +14,35 @@ const documentSelector = supportedLanguages.map((language) => ({
   scheme: 'file',
 }))
 
+export enum StatusIcon {
+  Checking = 'loading',
+  Success = 'check-all',
+  Error = 'alert',
+}
+
 export class Extension {
   channel: vscode.OutputChannel = vscode.window.createOutputChannel(
     'vscode-flow-ide'
   )
   flowLib: FlowLib = new FlowLib(this)
 
+  private statusBarItem: vscode.StatusBarItem
+
+  constructor() {
+    this.statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right,
+      -1
+    )
+    this.statusBarItem.command = 'flow.showOutput'
+  }
+
+  setStatusIcon(icon: StatusIcon) {
+    this.statusBarItem.text = `$(${icon}) Flow`
+    this.statusBarItem.show()
+  }
+
   get subscriptions(): vscode.Disposable[] {
-    return [this.channel]
+    return [this.channel, this.statusBarItem]
   }
 
   logError(error: Error) {
@@ -37,6 +58,12 @@ export class Extension {
 export function activate(context: vscode.ExtensionContext) {
   const extension = new Extension()
   context.subscriptions.push(...extension.subscriptions)
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('flow.showOutput', () => {
+      extension.channel.show()
+    })
+  )
 
   // The registration needs to happen after a timeout because of
   context.subscriptions.push(

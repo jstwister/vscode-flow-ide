@@ -3,7 +3,7 @@ import { spawn } from 'cross-spawn'
 import * as vscode from 'vscode'
 import * as path from 'path'
 import * as fs from 'fs'
-import { Extension } from './extension'
+import { Extension, StatusIcon } from './extension'
 import findRoot from 'find-root'
 import resolve from 'resolve'
 
@@ -224,13 +224,22 @@ export default class FlowLib {
     const root = findRoot(fileName)
     let promise = this.statusPromises.get(root)
     if (!promise) {
+      this.extension.setStatusIcon(StatusIcon.Checking)
       promise = Promise.resolve(
         this.execFlow({ fileName, args: ['status', '--json'] })
       )
-      const done = () => {
-        this.statusPromises.delete(root)
-      }
-      promise.then(done, done)
+      promise.then(
+        ({ errors }) => {
+          this.statusPromises.delete(root)
+          this.extension.setStatusIcon(
+            errors?.length ? StatusIcon.Error : StatusIcon.Success
+          )
+        },
+        () => {
+          this.statusPromises.delete(root)
+          this.extension.setStatusIcon(StatusIcon.Error)
+        }
+      )
       this.statusPromises.set(root, promise)
     }
     return promise
@@ -293,6 +302,7 @@ export default class FlowLib {
     fileContents: string
     fileName: string
   }): Promise<any> {
+    this.extension.channel.appendLine(`getting coverage for ${fileName}`)
     return this.execFlow({
       fileContents,
       fileName,

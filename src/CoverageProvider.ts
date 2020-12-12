@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as Path from 'path'
 import { Extension } from './extension'
 
 export default class CoverageDecorations {
@@ -74,8 +75,9 @@ export default class CoverageDecorations {
         )
     )
   }
-  async getCoverage(editor): Promise<any> {
+  async getCoverage(editor: vscode.TextEditor): Promise<any> {
     const fileName = editor.document.uri.fsPath
+    if (!Path.isAbsolute(fileName)) return null
     const fileContents = editor.document.getText()
     if (!fileContents) return null
     const coverage = await this.extension.flowLib.getCoverage({

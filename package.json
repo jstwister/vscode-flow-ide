@@ -2,7 +2,7 @@
   "name": "vscode-flow-ide",
   "displayName": "vscode-flow-ide",
   "description": "fork of vscode-flow-ide that uses flow-bin installed in each directory",
-  "version": "1.4.4",
+  "version": "1.5.0",
   "publisher": "jedwards1211",
   "engines": {
     "vscode": "^1.51.0"
@@ -20,11 +20,15 @@
     "commands": [
       {
         "command": "flow.coverage",
-        "title": "Flow-IDE: Toggle Flowtype coverage"
+        "title": "vscode-flow-ide: Toggle Flowtype coverage"
       },
       {
         "command": "flow.path",
-        "title": "Flow-IDE: Show path to Flow"
+        "title": "vscode-flow-ide: Show path to Flow"
+      },
+      {
+        "command": "flow.showOutput",
+        "title": "vscode-flow-ide: Show debug output"
       }
     ],
     "configuration": {

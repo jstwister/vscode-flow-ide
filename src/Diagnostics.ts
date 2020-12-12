@@ -108,6 +108,7 @@ const updateDiagnostics = async (
   try {
     if (!document) return
     const fileName = document.uri.fsPath
+    if (!Path.isAbsolute(fileName)) return
     const base = Path.basename(fileName)
     if (!/\.(js|jsx|mjs|es6)$/.test(base)) {
       return false

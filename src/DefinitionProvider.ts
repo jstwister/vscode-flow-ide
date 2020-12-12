@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as Path from 'path'
 import { Extension } from './extension'
 
 export default class DefinitionProvider {
@@ -13,11 +14,13 @@ export default class DefinitionProvider {
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Location | vscode.Location[] | null> {
+    const fileName = document.uri.fsPath
+    if (!Path.isAbsolute(fileName)) return null
     try {
       const fileContents = document.getText()
       const definition = await this.extension.flowLib.getDefinition({
         fileContents,
-        fileName: document.uri.fsPath,
+        fileName,
         position,
         token,
       })

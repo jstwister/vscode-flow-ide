@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as Path from 'path'
 import { Extension } from './extension'
 import prettier from 'prettier'
 
@@ -14,13 +15,15 @@ export default class HoverProvider {
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | null> {
+    const fileName = document.uri.fsPath
+    if (!Path.isAbsolute(fileName)) return null
     try {
       const wordPosition = document.getWordRangeAtPosition(position)
       if (!wordPosition) return null
       const word = document.getText(wordPosition)
       const typeAtPos = await this.extension.flowLib.getTypeAtPos({
         fileContents: document.getText(),
-        fileName: document.uri.fsPath,
+        fileName,
         position,
         token,
       })
