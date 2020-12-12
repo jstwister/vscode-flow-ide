@@ -30,12 +30,12 @@ export default class SignatureProvider implements vscode.SignatureHelpProvider {
       const strToAutocomplete =
         fileContents.slice(0, callerEndPosOffset) +
         fileContents.slice(currentPosOffset)
-      const completions = await this.extension.flowLib.getAutocomplete(
-        strToAutocomplete,
-        document.uri.fsPath,
-        callerPos,
-        { token }
-      )
+      const completions = await this.extension.flowLib.getAutocomplete({
+        fileContents: strToAutocomplete,
+        fileName: document.uri.fsPath,
+        position: callerPos,
+        token,
+      })
 
       if (!completions) return null
       const res = completions.result

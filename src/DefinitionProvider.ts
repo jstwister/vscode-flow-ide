@@ -15,12 +15,12 @@ export default class DefinitionProvider {
   ): Promise<vscode.Location | vscode.Location[] | null> {
     try {
       const fileContents = document.getText()
-      const definition = await this.extension.flowLib.getDefinition(
+      const definition = await this.extension.flowLib.getDefinition({
         fileContents,
-        document.uri.fsPath,
+        fileName: document.uri.fsPath,
         position,
-        { token }
-      )
+        token,
+      })
       if (definition && definition.path) {
         const startPosition = new vscode.Position(
           Math.max(0, definition.line - 1),

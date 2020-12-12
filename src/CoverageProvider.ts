@@ -75,10 +75,13 @@ export default class CoverageDecorations {
     )
   }
   async getCoverage(editor): Promise<any> {
-    const filename = editor.document.uri.fsPath
-    const text = editor.document.getText()
-    if (!text) return null
-    const coverage = await this.extension.flowLib.getCoverage(text, filename)
+    const fileName = editor.document.uri.fsPath
+    const fileContents = editor.document.getText()
+    if (!fileContents) return null
+    const coverage = await this.extension.flowLib.getCoverage({
+      fileContents,
+      fileName,
+    })
     if (coverage) return coverage.expressions
   }
   _updateEditor(editor, filename) {

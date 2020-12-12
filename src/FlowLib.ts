@@ -41,11 +41,22 @@ function purgeFlowBin(cwd: string): void {
 }
 
 type ExecFlowOptions = {
+  fileName: string
+  fileContents?: string
+  args?: (string | number)[]
   token?: vscode.CancellationToken
 }
 
 export default class FlowLib {
   private extension: Extension
+  /**
+   * Map from project root to prev flow command promise command in that project
+   */
+  private prevCommandPromises: Map<string, Promise<any>> = new Map()
+  /**
+   * Map from project root to current running flow status command in that project
+   */
+  private statusPromises: Map<string, Promise<any>> = new Map()
 
   constructor(extension: Extension) {
     this.extension = extension
@@ -88,145 +99,204 @@ export default class FlowLib {
     return result
   }
 
-  async execFlow(
+  execFlow({
     fileContents,
-    filename,
-    args,
-    options?: ExecFlowOptions
-  ): Promise<any> {
-    return await vscode.window.withProgress<any>(
-      {
-        location: vscode.ProgressLocation.Window,
-        cancellable: false,
-        title: 'Running Flow',
-      },
-      (progress) =>
-        new Promise((resolve, reject) => {
-          const command = `flow ${args.map(formatArg).join(' ')}`
-          if (!fs.existsSync(filename)) {
-            resolve(undefined)
-            return
-          }
-          const cwd = path.dirname(filename)
-          const flowBin = this.getPathToFlow(cwd)
-          if (!flowBin) {
-            resolve(undefined)
-            return
-          }
-          this.extension.channel.appendLine(`Running: ${command}`)
-          let flowOutput = ''
-          let flowOutputError = ''
-          const flowProc = spawn(flowBin, args, { cwd: cwd })
-          if (options?.token) {
-            options?.token.onCancellationRequested(() =>
-              flowProc.kill('SIGINT')
-            )
-          }
-          flowProc.on('error', reject)
-          flowProc.stdout.on('data', (data) => {
-            flowOutput += data.toString()
-          })
-          flowProc.stderr.on('data', (data) => {
-            flowOutputError += data.toString()
-          })
-          flowProc.on('exit', (code?: number, signal?: string) => {
-            if (
-              options?.token?.isCancellationRequested &&
-              signal === 'SIGINT'
-            ) {
+    fileName,
+    args = [],
+    token,
+  }: ExecFlowOptions): Promise<any> {
+    // only run one command at a time in a given project root, to avoid swamping the flow server with requests
+    const root = findRoot(fileName)
+    const prevPromise = this.prevCommandPromises.get(root) || Promise.resolve()
+    const result = prevPromise.then(async () => {
+      if (token?.isCancellationRequested) throw new Error('operation canceled')
+      return await vscode.window.withProgress<any>(
+        {
+          location: vscode.ProgressLocation.Window,
+          cancellable: false,
+          title: 'Running Flow',
+        },
+        (progress) =>
+          new Promise((resolve, reject) => {
+            if (token?.isCancellationRequested) {
+              reject(new Error('operation canceled'))
+              return
+            }
+            const command = `flow ${args.map(formatArg).join(' ')}`
+            if (!fs.existsSync(fileName)) {
+              resolve(undefined)
+              return
+            }
+            const cwd = path.dirname(fileName)
+            const flowBin = this.getPathToFlow(cwd)
+            if (!flowBin) {
+              resolve(undefined)
+              return
+            }
+            this.extension.channel.appendLine(`Running: ${command}`)
+            let flowOutput = ''
+            let flowOutputError = ''
+            const flowProc = spawn(flowBin, args, { cwd: cwd })
+            if (token) {
+              token.onCancellationRequested(() => flowProc.kill('SIGINT'))
+            }
+            flowProc.on('error', reject)
+            flowProc.stdout.on('data', (data) => {
+              flowOutput += data.toString()
+            })
+            flowProc.stderr.on('data', (data) => {
               this.extension.channel.appendLine(
-                `Operation was canceled: ${command}`
+                `flow stderr: ${data.toString()}`
               )
-              reject(new Error(`operation was canceled`))
-            } else if (flowOutputError) {
-              this.extension.channel.appendLine(
-                `${command} exited with ${
-                  code != null ? `code ${code}` : `signal ${signal}`
-                }: ${flowOutputError}`
-              )
-              reject(
-                new Error(
-                  `flow exited with ${
+            })
+            flowProc.on('exit', (code?: number, signal?: string) => {
+              if (token?.isCancellationRequested && signal === 'SIGINT') {
+                this.extension.channel.appendLine(
+                  `Operation was canceled: ${command}`
+                )
+                reject(new Error('operation canceled'))
+              } else if (flowOutputError) {
+                this.extension.channel.appendLine(
+                  `${command} exited with ${
                     code != null ? `code ${code}` : `signal ${signal}`
                   }: ${flowOutputError}`
                 )
-              )
-            } else {
-              this.extension.channel.appendLine(
-                `Result of ${command}: ${flowOutput}`
-              )
-              let result = flowOutput
-              if (flowOutput && flowOutput.length) {
-                result = JSON.parse(flowOutput)
+                reject(
+                  new Error(
+                    `flow exited with ${
+                      code != null ? `code ${code}` : `signal ${signal}`
+                    }: ${flowOutputError}`
+                  )
+                )
+              } else {
+                this.extension.channel.appendLine(
+                  `Result of ${command}: ${flowOutput}`
+                )
+                let result = flowOutput
+                if (flowOutput && flowOutput.length) {
+                  result = JSON.parse(flowOutput)
+                }
+                resolve(result)
               }
-              resolve(result)
-            }
+            })
+            if (fileContents != null) flowProc.stdin.write(fileContents)
+            flowProc.stdin.end()
           })
-          flowProc.stdin.write(fileContents)
-          flowProc.stdin.end()
-        })
+      )
+    })
+    this.prevCommandPromises.set(
+      root,
+      result.catch(() => {})
     )
+    return result
   }
 
-  getTypeAtPos(
-    fileContents: string,
+  getTypeAtPos({
+    fileContents,
     fileName,
-    pos: vscode.Position,
-    options?: ExecFlowOptions
-  ): Promise<any> {
-    return this.execFlow(
+    position,
+    ...options
+  }: {
+    fileContents: string
+    fileName
+    position: vscode.Position
+    token?: vscode.CancellationToken
+  }): Promise<any> {
+    return this.execFlow({
       fileContents,
       fileName,
-      [
+      args: [
         'type-at-pos',
         '--json',
         '--pretty',
         '--path',
         fileName,
-        pos.line + 1,
-        pos.character + 1,
+        position.line + 1,
+        position.character + 1,
       ],
-      options
-    )
+      ...options,
+    })
   }
 
-  getDiagnostics(fileContents: string, fileName: string): Promise<any> {
-    return this.execFlow(fileContents, fileName, ['status', '--json'])
+  getDiagnostics({ fileName }: { fileName: string }): Promise<any> {
+    // if this gets called before the previous status check (for the project root) finished,
+    // just return the pending promise from the previous status check
+    const root = findRoot(fileName)
+    let promise = this.statusPromises.get(root)
+    if (!promise) {
+      promise = Promise.resolve(
+        this.execFlow({ fileName, args: ['status', '--json'] })
+      )
+      const done = () => {
+        this.statusPromises.delete(root)
+      }
+      promise.then(done, done)
+      this.statusPromises.set(root, promise)
+    }
+    return promise
   }
 
-  getAutocomplete(
-    fileContents: string,
-    fileName: string,
-    pos: vscode.Position,
-    options?: ExecFlowOptions
-  ): Promise<any> {
-    return this.execFlow(
+  getAutocomplete({
+    fileContents,
+    fileName,
+    position,
+    ...options
+  }: {
+    fileContents: string
+    fileName: string
+    position: vscode.Position
+    token?: vscode.CancellationToken
+  }): Promise<any> {
+    return this.execFlow({
       fileContents,
       fileName,
-      ['autocomplete', '--json', fileName, pos.line + 1, pos.character + 1],
-      options
-    )
+      args: [
+        'autocomplete',
+        '--json',
+        fileName,
+        position.line + 1,
+        position.character + 1,
+      ],
+      ...options,
+    })
   }
 
-  getDefinition(
-    fileContents: string,
-    fileName: string,
-    pos: vscode.Position,
-    options?: ExecFlowOptions
-  ): Promise<any> {
-    return this.execFlow(
+  getDefinition({
+    fileContents,
+    fileName,
+    position,
+    ...options
+  }: {
+    fileContents: string
+    fileName: string
+    position: vscode.Position
+    token?: vscode.CancellationToken
+  }): Promise<any> {
+    return this.execFlow({
       fileContents,
       fileName,
-      ['get-def', '--json', fileName, pos.line + 1, pos.character + 1],
-      options
-    )
+      args: [
+        'get-def',
+        '--json',
+        fileName,
+        position.line + 1,
+        position.character + 1,
+      ],
+      ...options,
+    })
   }
 
-  getCoverage(fileContents: string, fileName: string): Promise<any> {
-    return this.execFlow(fileContents, fileName, [
-      'coverage',
-      '--json',
+  getCoverage({
+    fileContents,
+    fileName,
+  }: {
+    fileContents: string
+    fileName: string
+  }): Promise<any> {
+    return this.execFlow({
+      fileContents,
       fileName,
-    ])
+      args: ['coverage', '--json', fileName],
+    })
   }
 }

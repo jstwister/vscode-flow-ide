@@ -107,16 +107,13 @@ const updateDiagnostics = async (
 ): Promise<boolean | void> => {
   try {
     if (!document) return
-    const filename = document.uri.fsPath
-    const base = Path.basename(filename)
+    const fileName = document.uri.fsPath
+    const base = Path.basename(fileName)
     if (!/\.(js|jsx|mjs|es6)$/.test(base)) {
       return false
     }
     diagnostics.clear()
-    const flowDiag = await extension.flowLib.getDiagnostics(
-      document.getText(),
-      filename
-    )
+    const flowDiag = await extension.flowLib.getDiagnostics({ fileName })
     if (flowDiag && flowDiag.errors) {
       const vscodeDiagByFile = mapFlowDiagToVSCode(flowDiag.errors)
       Object.keys(vscodeDiagByFile).forEach((file) => {

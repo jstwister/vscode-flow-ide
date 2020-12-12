@@ -45,12 +45,12 @@ export default class AutocompleteProvider {
   ): Promise<vscode.CompletionItem[] | null> {
     try {
       const fileContents = document.getText()
-      const completions = await this.extension.flowLib.getAutocomplete(
+      const completions = await this.extension.flowLib.getAutocomplete({
         fileContents,
-        document.uri.fsPath,
+        fileName: document.uri.fsPath,
         position,
-        { token }
-      )
+        token,
+      })
       if (completions) {
         return completions.result.map((item) => {
           const completionItem = new vscode.CompletionItem(

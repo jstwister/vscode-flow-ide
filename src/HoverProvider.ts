@@ -18,12 +18,12 @@ export default class HoverProvider {
       const wordPosition = document.getWordRangeAtPosition(position)
       if (!wordPosition) return null
       const word = document.getText(wordPosition)
-      const typeAtPos = await this.extension.flowLib.getTypeAtPos(
-        document.getText(),
-        document.uri.fsPath,
+      const typeAtPos = await this.extension.flowLib.getTypeAtPos({
+        fileContents: document.getText(),
+        fileName: document.uri.fsPath,
         position,
-        { token }
-      )
+        token,
+      })
       if (!typeAtPos) return null
       let value = `type ${word} = ${typeAtPos.type}`
       for (const candidate of [

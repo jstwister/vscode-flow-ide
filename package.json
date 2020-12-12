@@ -2,7 +2,7 @@
   "name": "vscode-flow-ide",
   "displayName": "vscode-flow-ide",
   "description": "fork of vscode-flow-ide that uses flow-bin installed in each directory",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "publisher": "jedwards1211",
   "engines": {
     "vscode": "^1.51.0"
