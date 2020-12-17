@@ -99,7 +99,7 @@ export default class FlowLib {
     return result
   }
 
-  execFlow({
+  private execFlow({
     fileContents,
     fileName,
     args = [],
@@ -107,7 +107,12 @@ export default class FlowLib {
   }: ExecFlowOptions): Promise<any> {
     // only run one command at a time in a given project root, to avoid swamping the flow server with requests
     const root = findRoot(fileName)
-    const prevPromise = this.prevCommandPromises.get(root) || Promise.resolve()
+    const prevPromise =
+      args[0] === 'status'
+        ? // status promises have their own mutual exclusion
+          Promise.resolve()
+        : this.prevCommandPromises.get(root) ||
+          this.getDiagnostics({ fileName })
     const result = prevPromise.then(async () => {
       if (token?.isCancellationRequested) throw new Error('operation canceled')
       return await vscode.window.withProgress<any>(
@@ -137,6 +142,28 @@ export default class FlowLib {
             let flowOutput = ''
             let flowOutputError = ''
             const flowProc = spawn(flowBin, args, { cwd: cwd })
+            let rawProc
+            if (args[0] === 'status') {
+              rawProc = spawn(flowBin, [], { cwd: root, stdio: 'pipe' })
+              let lastReportedPercentage = 0
+              rawProc.stderr.on('data', (data) => {
+                data = data.toString()
+                const match = /server is initializing \((.*)\)/i.exec(data)
+                const percentageMatch = /(\d+(\.\d*)?|\.\d+)%/.exec(data)
+                if (match || percentageMatch) {
+                  const report: { message?: string; increment?: number } = {
+                    message: match?.[1],
+                  }
+                  if (percentageMatch) {
+                    const percentage = parseFloat(percentageMatch[1])
+                    const diff = percentage - lastReportedPercentage
+                    lastReportedPercentage = percentage
+                    report.increment = diff
+                  }
+                  progress.report(report)
+                }
+              })
+            }
             if (token) {
               token.onCancellationRequested(() => flowProc.kill('SIGINT'))
             }
@@ -150,6 +177,9 @@ export default class FlowLib {
               )
             })
             flowProc.on('exit', (code?: number, signal?: string) => {
+              if (rawProc) {
+                rawProc.kill()
+              }
               if (token?.isCancellationRequested && signal === 'SIGINT') {
                 this.extension.channel.appendLine(
                   `Operation was canceled: ${command}`
@@ -184,10 +214,12 @@ export default class FlowLib {
           })
       )
     })
-    this.prevCommandPromises.set(
-      root,
-      result.catch(() => {})
-    )
+    if (args[0] === 'status') {
+      this.prevCommandPromises.set(
+        root,
+        result.catch(() => {})
+      )
+    }
     return result
   }
 
@@ -225,9 +257,8 @@ export default class FlowLib {
     let promise = this.statusPromises.get(root)
     if (!promise) {
       this.extension.setStatusIcon(StatusIcon.Checking)
-      promise = Promise.resolve(
-        this.execFlow({ fileName, args: ['status', '--json'] })
-      )
+
+      promise = this.execFlow({ fileName, args: ['status', '--json'] })
       promise.then(
         ({ errors }) => {
           this.statusPromises.delete(root)

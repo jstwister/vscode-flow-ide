@@ -2,7 +2,7 @@
   "name": "vscode-flow-ide",
   "displayName": "vscode-flow-ide",
   "description": "fork of vscode-flow-ide that uses flow-bin installed in each directory",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "publisher": "jedwards1211",
   "engines": {
     "vscode": "^1.51.0"
@@ -69,7 +69,7 @@
     "typescript": "^4.1.2"
   },
   "dependencies": {
-    "cross-spawn": "^4.0.2",
+    "cross-spawn": "^7.0.3",
     "find-root": "^1.1.0",
     "prettier": "^2.2.1",
     "resolve": "^1.15.1"
