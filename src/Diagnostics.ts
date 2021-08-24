@@ -58,8 +58,8 @@ const buildOperationDiagnosticMessage = (err) => {
 
 const buildRange = (firstBlame) =>
   new vscode.Range(
-    new vscode.Position(firstBlame.line - 1, firstBlame.start - 1),
-    new vscode.Position(firstBlame.endline - 1, firstBlame.end)
+    new vscode.Position(Math.max(firstBlame.line - 1, 0), Math.max(firstBlame.start - 1, 0)),
+    new vscode.Position(Math.max(firstBlame.endline - 1, 0), Math.max(firstBlame.end, 0))
   )
 const handleOperationError = (err, groupedDiagnosis) => {
   const firstBlame = err.operation
