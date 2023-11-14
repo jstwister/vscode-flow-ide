@@ -28,6 +28,7 @@ export default class CoverageDecorations {
   }
 
   refreshCoverage() {
+    if (!this._decorationsOn) return
     vscode.window.visibleTextEditors.forEach(
       async (editor): Promise<void> => {
         try {
